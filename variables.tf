@@ -7,7 +7,7 @@ variable "compartment_name" {
 }
 
 variable "region" {
-    type = string
+  type = string
 }
 variable "oke_cluster_name" {
   default = "oke-cluster"

@@ -22,139 +22,139 @@ resource "oci_identity_compartment" "tf-compartment" {
 
 # vcn
 # Source from https://registry.terraform.io/modules/oracle-terraform-modules/vcn/oci/
-module "vcn"{
+module "vcn" {
   source  = "oracle-terraform-modules/vcn/oci"
   version = "3.1.0"
   # insert the 5 required variables here
 
   # Required Inputs
   compartment_id = oci_identity_compartment.tf-compartment.id
-  region = var.region
+  region         = var.region
 
   internet_gateway_route_rules = null
-  local_peering_gateways = null
-  nat_gateway_route_rules = null
+  local_peering_gateways       = null
+  nat_gateway_route_rules      = null
 
   # Optional Inputs
-  vcn_name = "vcn-dev"
+  vcn_name      = "vcn-dev"
   vcn_dns_label = "vcnmodule"
-  vcn_cidrs = ["10.0.0.0/16"]
-  
+  vcn_cidrs     = ["10.0.0.0/16"]
+
   create_internet_gateway = false
-  create_nat_gateway = false
-  create_service_gateway = false  
+  create_nat_gateway      = false
+  create_service_gateway  = false
 }
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_security_list
 
-resource "oci_core_security_list" "private-security-list"{
+resource "oci_core_security_list" "private-security-list" {
 
-# Required
+  # Required
   compartment_id = oci_identity_compartment.tf-compartment.id
-  vcn_id = module.vcn.vcn_id
+  vcn_id         = module.vcn.vcn_id
 
-# Optional
+  # Optional
   display_name = "security-list-for-private-subnet"
-  
+
   egress_security_rules {
-      stateless = false
-      destination = "0.0.0.0/0"
-      destination_type = "CIDR_BLOCK"
-      protocol = "all" 
-  }  
- 
-ingress_security_rules { 
-      stateless = false
-      source = "10.0.0.0/16"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml TCP is 6
-      protocol = "6"
-      tcp_options { 
-          min = 22
-          max = 22
-      }
+    stateless        = false
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
+  }
+
+  ingress_security_rules {
+    stateless   = false
+    source      = "10.0.0.0/16"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml TCP is 6
+    protocol = "6"
+    tcp_options {
+      min = 22
+      max = 22
     }
-  ingress_security_rules { 
-      stateless = false
-      source = "0.0.0.0/0"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
-      protocol = "1"
-  
-      # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
-      icmp_options {
-        type = 3
-        code = 4
-      } 
-    }   
-  
-  ingress_security_rules { 
-      stateless = false
-      source = "10.0.0.0/16"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
-      protocol = "1"
-  
-      # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
-      icmp_options {
-        type = 3
-      } 
+  }
+  ingress_security_rules {
+    stateless   = false
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
+    protocol = "1"
+
+    # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+    icmp_options {
+      type = 3
+      code = 4
     }
+  }
+
+  ingress_security_rules {
+    stateless   = false
+    source      = "10.0.0.0/16"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
+    protocol = "1"
+
+    # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+    icmp_options {
+      type = 3
+    }
+  }
 }
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_security_list
 
-resource "oci_core_security_list" "public-security-list"{
+resource "oci_core_security_list" "public-security-list" {
 
-# Required
+  # Required
   compartment_id = oci_identity_compartment.tf-compartment.id
-  vcn_id = module.vcn.vcn_id
+  vcn_id         = module.vcn.vcn_id
 
-# Optional
+  # Optional
   display_name = "security-list-for-public-subnet"
   egress_security_rules {
-      stateless = false
-      destination = "0.0.0.0/0"
-      destination_type = "CIDR_BLOCK"
-      protocol = "all" 
+    stateless        = false
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
   }
-ingress_security_rules { 
-      stateless = false
-      source = "0.0.0.0/0"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml TCP is 6
-      protocol = "6"
-      tcp_options { 
-          min = 22
-          max = 22
-      }
+  ingress_security_rules {
+    stateless   = false
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml TCP is 6
+    protocol = "6"
+    tcp_options {
+      min = 22
+      max = 22
     }
-  ingress_security_rules { 
-      stateless = false
-      source = "0.0.0.0/0"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
-      protocol = "1"
-  
-      # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
-      icmp_options {
-        type = 3
-        code = 4
-      } 
-    }   
-  
-  ingress_security_rules { 
-      stateless = false
-      source = "10.0.0.0/16"
-      source_type = "CIDR_BLOCK"
-      # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
-      protocol = "1"
-  
-      # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
-      icmp_options {
-        type = 3
-      } 
-    }  
+  }
+  ingress_security_rules {
+    stateless   = false
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
+    protocol = "1"
+
+    # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+    icmp_options {
+      type = 3
+      code = 4
+    }
+  }
+
+  ingress_security_rules {
+    stateless   = false
+    source      = "10.0.0.0/16"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml ICMP is 1  
+    protocol = "1"
+
+    # For ICMP type and code see: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+    icmp_options {
+      type = 3
+    }
+  }
 
 }
 
@@ -324,34 +324,34 @@ resource "oci_core_security_list" "my_nodepool_subnet_sec_list" {
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_subnet
 
-resource "oci_core_subnet" "vcn-private-subnet"{
+resource "oci_core_subnet" "vcn-private-subnet" {
 
   # Required
   compartment_id = oci_identity_compartment.tf-compartment.id
-  vcn_id = module.vcn.vcn_id
-  cidr_block = var.private_subnet_cidr
- 
+  vcn_id         = module.vcn.vcn_id
+  cidr_block     = var.private_subnet_cidr
+
   # Optional
   # Caution: For the route table id, use module.vcn.nat_route_id.
   # Do not use module.vcn.nat_gateway_id, because it is the OCID for the gateway and not the route table.
-  route_table_id = module.vcn.nat_route_id
+  route_table_id    = module.vcn.nat_route_id
   security_list_ids = [oci_core_security_list.private-security-list.id]
-  display_name = "private-subnet"
+  display_name      = "private-subnet"
 }
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_subnet
 
-resource "oci_core_subnet" "vcn-public-subnet"{
+resource "oci_core_subnet" "vcn-public-subnet" {
 
   # Required
   compartment_id = oci_identity_compartment.tf-compartment.id
-  vcn_id = module.vcn.vcn_id
-  cidr_block = var.public_subnet_cidr
- 
+  vcn_id         = module.vcn.vcn_id
+  cidr_block     = var.public_subnet_cidr
+
   # Optional
-  route_table_id = module.vcn.ig_route_id
+  route_table_id    = module.vcn.ig_route_id
   security_list_ids = [oci_core_security_list.public-security-list.id]
-  display_name = "public-subnet"
+  display_name      = "public-subnet"
 }
 
 resource "oci_core_subnet" "my_lb_subnet" {
@@ -444,27 +444,28 @@ resource "oci_core_service_gateway" "my_sg" {
 ## oke cluster public api private nodes
 
 module "oci-oke" {
-  source                        = "github.com/oracle-devrel/terraform-oci-arch-oke"
-  tenancy_ocid                  = var.tenancy_ocid
-  compartment_ocid              = oci_identity_compartment.tf-compartment.id
-  oke_cluster_name              = var.oke_cluster_name
-  k8s_version                   = var.k8s_version
-  pool_name                     = var.pool_name
-  node_shape                    = var.node_shape
-  node_ocpus                    = var.node_ocpus
-  node_memory                   = var.node_memory
-  node_count                    = var.node_count
-  use_existing_vcn              = true
-  vcn_id                        = module.vcn.vcn_id
-  is_api_endpoint_subnet_public = true                                      # OKE API Endpoint will be public (Internet facing)
-  api_endpoint_subnet_id        = oci_core_subnet.my_api_endpoint_subnet.id  # public subnet
-  is_lb_subnet_public           = true                                      # OKE LoadBalanacer will be public (Internet facing)
-  lb_subnet_id                  = oci_core_subnet.my_lb_subnet.id         # public subnet
-  is_nodepool_subnet_public     = false
-  nodepool_subnet_id            = oci_core_subnet.my_nodepool_subnet.id
-
+  source                                                  = "github.com/oracle-devrel/terraform-oci-arch-oke"
+  oci_vcn_ip_native                                       = true
+  tenancy_ocid                                            = var.tenancy_ocid
+  compartment_ocid                                        = oci_identity_compartment.tf-compartment.id
+  oke_cluster_name                                        = var.oke_cluster_name
+  k8s_version                                             = var.k8s_version
+  pool_name                                               = var.pool_name
+  node_shape                                              = var.node_shape
+  node_ocpus                                              = var.node_ocpus
+  node_memory                                             = var.node_memory
+  node_count                                              = var.node_count
+  use_existing_vcn                                        = true
+  vcn_id                                                  = module.vcn.vcn_id
+  is_api_endpoint_subnet_public                           = true                                      # OKE API Endpoint will be public (Internet facing)
+  api_endpoint_subnet_id                                  = oci_core_subnet.my_api_endpoint_subnet.id # public subnet
+  is_lb_subnet_public                                     = true                                      # OKE LoadBalanacer will be public (Internet facing)
+  lb_subnet_id                                            = oci_core_subnet.my_lb_subnet.id           # public subnet
+  is_nodepool_subnet_public                               = false
+  nodepool_subnet_id                                      = oci_core_subnet.my_nodepool_subnet.id
+  max_pods_per_node                                       = 50
   cluster_options_add_ons_is_kubernetes_dashboard_enabled = false
-  cluster_options_add_ons_is_tiller_enabled = false
+  cluster_options_add_ons_is_tiller_enabled               = false
 }
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/containerengine_cluster
@@ -521,7 +522,7 @@ module "oci-oke" {
 #          image_id = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaa3ibxbkfvmcdyshvkuzhpc2wx2ofmpjyyjf5tyh3eqge7vc7d5rtq"
 #          source_type = "image"
 #     }
- 
+
 #     # Optional
 #     initial_node_labels {
 #         key = "name"
