@@ -241,7 +241,7 @@ resource "oci_core_security_list" "my_nodepool_subnet_sec_list" {
   vcn_id         = module.vcn.vcn_id
 
   egress_security_rules {
-    protocol         = "All"
+    protocol         = "all"
     destination_type = "CIDR_BLOCK"
     destination      = var.nodepool_subnet_cidr
   }
@@ -291,7 +291,7 @@ resource "oci_core_security_list" "my_nodepool_subnet_sec_list" {
   }
 
   ingress_security_rules {
-    protocol = "All"
+    protocol = "all"
     source   = var.nodepool_subnet_cidr
   }
 
