@@ -113,3 +113,8 @@ output "Cluster" {
 output "NodePool" {
   value = module.oci-oke.node_pool
 }
+
+output "public_ip" {
+  description = "Public IPs of created instances. "
+  value       = module.instance_flex.*.public_ip
+}

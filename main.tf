@@ -349,7 +349,7 @@ resource "oci_core_subnet" "vcn-public-subnet" {
   cidr_block     = var.public_subnet_cidr
 
   # Optional
-  route_table_id    = module.vcn.ig_route_id
+  route_table_id    = oci_core_route_table.my_rt_via_igw.id
   security_list_ids = [oci_core_security_list.public-security-list.id]
   display_name      = "public-subnet"
 }
@@ -445,7 +445,6 @@ resource "oci_core_service_gateway" "my_sg" {
 
 module "oci-oke" {
   source                                                  = "github.com/oracle-devrel/terraform-oci-arch-oke"
-  oci_vcn_ip_native                                       = true
   tenancy_ocid                                            = var.tenancy_ocid
   compartment_ocid                                        = oci_identity_compartment.tf-compartment.id
   oke_cluster_name                                        = var.oke_cluster_name
@@ -455,6 +454,7 @@ module "oci-oke" {
   node_ocpus                                              = var.node_ocpus
   node_memory                                             = var.node_memory
   node_count                                              = var.node_count
+  # node_image_id = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaarbvtai3sxdzkhya7wd5laqsoa53gng2cjr4ya437o3mvfcyi6lbq"
   use_existing_vcn                                        = true
   vcn_id                                                  = module.vcn.vcn_id
   is_api_endpoint_subnet_public                           = true                                      # OKE API Endpoint will be public (Internet facing)
@@ -493,40 +493,96 @@ module "oci-oke" {
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/containerengine_node_pool
 
-# resource "oci_containerengine_node_pool" "oke-node-pool" {
-#     # Required
-#     cluster_id = oci_containerengine_cluster.oke-cluster.id
-#     compartment_id = oci_identity_compartment.tf-compartment.id
-#     kubernetes_version = "v1.24.1"
-#     name = "pool1"
-#     node_config_details{
-#         placement_configs{
-#             availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
-#             subnet_id = oci_core_subnet.vcn-private-subnet.id
-#         } 
-#         # placement_configs{
-#         #     availability_domain = data.oci_identity_availability_domains.ads.availability_domains[1].name
-#         #     subnet_id = oci_core_subnet.vcn-private-subnet.id
-#         # }
-#         #  placement_configs{
-#         #     availability_domain = data.oci_identity_availability_domains.ads.availability_domains[2].name
-#         #     subnet_id = oci_core_subnet.vcn-private-subnet.id
-#         # }
-#         size = 2
-#     }
-#     node_shape = "VM.Standard2.1"
+resource "oci_containerengine_node_pool" "oke-node-pool" {
+    # Required
+    cluster_id = module.oci-oke.cluster.id
+    compartment_id = oci_identity_compartment.tf-compartment.id
+    kubernetes_version = var.k8s_version
+    name = "pool2"
+    node_config_details{
+        placement_configs{
+            availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+            subnet_id = oci_core_subnet.my_nodepool_subnet.id
+        } 
+        # placement_configs{
+        #     availability_domain = data.oci_identity_availability_domains.ads.availability_domains[1].name
+        #     subnet_id = oci_core_subnet.vcn-private-subnet.id
+        # }
+        #  placement_configs{
+        #     availability_domain = data.oci_identity_availability_domains.ads.availability_domains[2].name
+        #     subnet_id = oci_core_subnet.vcn-private-subnet.id
+        # }
+        size = 1
+    }
+    node_shape = var.node_shape
 
-#     # Using image Oracle-Linux-7.x-<date>
-#     # Find image OCID for your region from https://docs.oracle.com/iaas/images/ 
-#     node_source_details {
-#          image_id = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaa3ibxbkfvmcdyshvkuzhpc2wx2ofmpjyyjf5tyh3eqge7vc7d5rtq"
-#          source_type = "image"
-#     }
+    # Using image Oracle-Linux-7.x-<date>
+    # Find image OCID for your region from https://docs.oracle.com/iaas/images/ 
+    node_source_details {
+         image_id = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaarbvtai3sxdzkhya7wd5laqsoa53gng2cjr4ya437o3mvfcyi6lbq"
+         source_type = "image"
+    }
 
-#     # Optional
-#     initial_node_labels {
-#         key = "name"
-#         value = "dev"
-#     }    
+    node_shape_config {
+      memory_in_gbs = 6
+      ocpus = 1
+    }
+    # Optional
+    initial_node_labels {
+        key = "name"
+        value = "dev"
+    }    
+}
+
+## instance
+
+module "instance_flex" {
+  # source = "git::https://github.com/oracle-terraform-modules/terraform-oci-compute-instance" ## use this to test directly from Github HEAD
+  source = "oracle-terraform-modules/compute-instance/oci"
+  # general oci parameters
+  compartment_ocid = oci_identity_compartment.tf-compartment.id
+  freeform_tags    = var.freeform_tags
+  defined_tags     = var.defined_tags
+  # compute instance parameters
+  ad_number                   = var.instance_ad_number
+  instance_count              = var.instance_count
+  instance_display_name       = "a1-flex-instance"
+  instance_state              = var.instance_state
+  shape                       = var.shape
+  source_ocid                 = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaang4c54ryu7enlifqcctsehoniacejogkays4t5qq5azs4l5nanuq"
+  source_type                 = var.source_type
+  instance_flex_memory_in_gbs = var.instance_flex_memory_in_gbs # only used if shape is Flex type
+  instance_flex_ocpus         = 1                               # only used if shape is Flex type
+  baseline_ocpu_utilization   = var.baseline_ocpu_utilization
+  cloud_agent_plugins = {
+    autonomous_linux       = "ENABLED"
+    bastion                = "ENABLED"
+    vulnerability_scanning = "ENABLED"
+    osms                   = "ENABLED"
+    management             = "DISABLED"
+    custom_logs            = "ENABLED"
+    run_command            = "ENABLED"
+    monitoring             = "ENABLED"
+    block_volume_mgmt      = "DISABLED"
+    java_management_service = "DISABLED"
+  }
+  # operating system parameters
+  ssh_public_keys = var.ssh_public_keys
+  # networking parameters
+  public_ip            = var.public_ip # NONE, RESERVED or EPHEMERAL
+  subnet_ocids         = [oci_core_subnet.vcn-public-subnet.id]
+  # primary_vnic_nsg_ids = [oci_core_network_security_group.nsg.id]
+  # storage parameters
+  boot_volume_backup_policy  = var.boot_volume_backup_policy
+  block_storage_sizes_in_gbs = var.block_storage_sizes_in_gbs
+}
+
+# resource "oci_core_network_security_group" "nsg" {
+#   #Required
+#   compartment_id = oci_identity_compartment.tf-compartment.id
+#   vcn_id         =  module.vcn.vcn_id
+
+#   #Optional
+#   display_name  = "NSG"
+#   freeform_tags = var.freeform_tags
 # }
-
