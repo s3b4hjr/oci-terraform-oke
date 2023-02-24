@@ -155,3 +155,27 @@ variable "block_storage_sizes_in_gbs" {
   type        = list(string)
   default     = [50]
 }
+
+
+
+## Mysql
+
+variable "admin_password" {
+    type        = string
+}
+
+variable "admin_username" {
+    type        = string
+}
+
+variable "mysql_shape" {
+  default = "MySQL.VM.Standard.E4.1.8GB"
+}
+
+variable "mysql_data_storage_in_gb" {
+  default = "50"
+}
+
+variable "dev_sql_display_name" {
+  default = "dev-sql"
+}

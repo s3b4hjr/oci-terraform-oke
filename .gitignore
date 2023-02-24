@@ -30,3 +30,4 @@ override.tf.json
 oci_api_key_public.pem
 .terraform*
 .terraform.*
+oci_api_key.pem

@@ -118,3 +118,8 @@ output "public_ip_instance_flex" {
   description = "Public IPs of created instances. "
   value       = module.instance_flex.*.public_ip
 }
+
+
+output "private_ip_dev_sql" {
+  value = oci_mysql_mysql_db_system.dev_sql.ip_address
+}

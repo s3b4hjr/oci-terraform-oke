@@ -1,5 +1,5 @@
 data "oci_identity_availability_domains" "ads" {
-  compartment_id = "ocid1.tenancy.oc1..aaaaaaaasjp6tq4pf4iiprgqlnpkasui3razi7apvjaijp76i2vtmksbe72q"
+  compartment_id = oci_identity_compartment.tf-compartment.id
 }
 
 data "oci_core_services" "AllOCIServices" {
@@ -72,6 +72,17 @@ resource "oci_core_security_list" "private-security-list" {
     tcp_options {
       min = 22
       max = 22
+    }
+  }
+    ingress_security_rules {
+    stateless   = false
+    source      = "10.0.0.0/16"
+    source_type = "CIDR_BLOCK"
+    # Get protocol numbers from https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml TCP is 6
+    protocol = "6"
+    tcp_options {
+      min = 3306
+      max = 3306
     }
   }
   ingress_security_rules {
@@ -532,6 +543,14 @@ resource "oci_containerengine_node_pool" "oke-node-pool" {
         key = "name"
         value = "dev"
     }    
+    depends_on = [
+      module.oci-oke
+    ]
+  lifecycle {
+    ignore_changes = [
+      node_config_details[0].size
+    ]
+  }    
 }
 
 ## instance
@@ -575,6 +594,9 @@ module "instance_flex" {
   # storage parameters
   boot_volume_backup_policy  = var.boot_volume_backup_policy
   block_storage_sizes_in_gbs = var.block_storage_sizes_in_gbs
+  depends_on = [
+    oci_identity_compartment.tf-compartment, module.vcn
+  ]
 }
 
 # resource "oci_core_network_security_group" "nsg" {
@@ -586,3 +608,19 @@ module "instance_flex" {
 #   display_name  = "NSG"
 #   freeform_tags = var.freeform_tags
 # }
+
+
+## SQL
+
+resource "oci_mysql_mysql_db_system" "dev_sql" {
+    admin_password = var.admin_password
+    admin_username = var.admin_username
+    availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+    compartment_id = oci_identity_compartment.tf-compartment.id
+    shape_name = var.mysql_shape
+    subnet_id = oci_core_subnet.vcn-private-subnet.id
+    data_storage_size_in_gb = var.mysql_data_storage_in_gb
+    display_name = var.dev_sql_display_name
+    
+    is_highly_available = false
+}
