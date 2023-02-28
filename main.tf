@@ -476,7 +476,7 @@ module "oci-oke" {
   nodepool_subnet_id                                      = oci_core_subnet.my_nodepool_subnet.id
   max_pods_per_node                                       = 50
   cluster_options_add_ons_is_kubernetes_dashboard_enabled = false
-  cluster_options_add_ons_is_tiller_enabled               = false
+  cluster_options_add_ons_is_tiller_enabled               = false 
 }
 
 # Source from https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/containerengine_cluster
@@ -530,7 +530,7 @@ resource "oci_containerengine_node_pool" "oke-node-pool" {
     # Using image Oracle-Linux-7.x-<date>
     # Find image OCID for your region from https://docs.oracle.com/iaas/images/ 
     node_source_details {
-         image_id = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaarbvtai3sxdzkhya7wd5laqsoa53gng2cjr4ya437o3mvfcyi6lbq"
+         image_id = var.node_image
          source_type = "image"
     }
 
@@ -543,9 +543,6 @@ resource "oci_containerengine_node_pool" "oke-node-pool" {
         key = "name"
         value = "dev"
     }    
-    depends_on = [
-      module.oci-oke
-    ]
   lifecycle {
     ignore_changes = [
       node_config_details[0].size
@@ -565,13 +562,13 @@ module "instance_flex" {
   # compute instance parameters
   ad_number                   = var.instance_ad_number
   instance_count              = var.instance_count
-  instance_display_name       = "a1-flex-instance"
+  instance_display_name       = "benchamrk"
   instance_state              = var.instance_state
   shape                       = var.shape
-  source_ocid                 = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaang4c54ryu7enlifqcctsehoniacejogkays4t5qq5azs4l5nanuq"
+  source_ocid                 = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaa2ki57s6vokigjzzi7rbhjgxjxa5irt67frqkibr6obgrrqjy5iza"
   source_type                 = var.source_type
   instance_flex_memory_in_gbs = var.instance_flex_memory_in_gbs # only used if shape is Flex type
-  instance_flex_ocpus         = 1                               # only used if shape is Flex type
+  instance_flex_ocpus         = var.instance_flex_cpu             # only used if shape is Flex type
   baseline_ocpu_utilization   = var.baseline_ocpu_utilization
   cloud_agent_plugins = {
     autonomous_linux       = "ENABLED"
@@ -594,9 +591,6 @@ module "instance_flex" {
   # storage parameters
   boot_volume_backup_policy  = var.boot_volume_backup_policy
   block_storage_sizes_in_gbs = var.block_storage_sizes_in_gbs
-  depends_on = [
-    oci_identity_compartment.tf-compartment, module.vcn
-  ]
 }
 
 # resource "oci_core_network_security_group" "nsg" {

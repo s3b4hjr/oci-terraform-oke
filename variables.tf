@@ -22,7 +22,13 @@ variable "pool_name" {
 }
 
 variable "node_shape" {
-  default = "VM.Standard.A1.Flex"
+  default = "VM.Standard3.Flex"
+# default = "VM.Standard.A1.Flex"
+}
+
+variable "node_image" {
+  default = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaa2ki57s6vokigjzzi7rbhjgxjxa5irt67frqkibr6obgrrqjy5iza"
+  # default = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaarbvtai3sxdzkhya7wd5laqsoa53gng2cjr4ya437o3mvfcyi6lbq" a1flex
 }
 
 variable "node_ocpus" {
@@ -92,9 +98,14 @@ variable "instance_display_name" {
 variable "instance_flex_memory_in_gbs" {
   type        = number
   description = "(Updatable) The total amount of memory available to the instance, in gigabytes."
-  default     = 6
+  default     = 8
 }
 
+
+variable "instance_flex_cpu" {
+  type = number
+  default = 2
+}
 variable "instance_flex_ocpus" {
   type        = number
   description = "(Updatable) The total number of OCPUs available to the instance."
@@ -115,7 +126,7 @@ variable "instance_state" {
 variable "shape" {
   description = "The shape of an instance."
   type        = string
-  default     = "VM.Standard.A1.Flex"
+  default     = "VM.Standard.E3.Flex"
 }
 
 variable "baseline_ocpu_utilization" {
